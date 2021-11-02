@@ -18,8 +18,8 @@ echo "Logging into to OpenShift Internal Image Repository"
 echo "$(oc whoami --show-token)" | docker login -u "$(oc whoami)" --password-stdin "${internal_registry}"
 
 echo "Loading and pushing nfs provisioner image"
-docker load -i "nfs-client-provisioner-${arch}-1.0.tar.gz"
-docker tag gmoney23/nfs-client-provisioner:1.0 "${nfs_image_repository}:${nfs_image_tag}"
+docker load -i "nfs-client-provisioner-${arch}-1.1.tar.gz"
+docker tag gmoney23/nfs-client-provisioner:1.1 "${nfs_image_repository}:${nfs_image_tag}"
 docker push "${nfs_image_repository}:${nfs_image_tag}"
 
 echo "Loading and pushing busybox test image"
