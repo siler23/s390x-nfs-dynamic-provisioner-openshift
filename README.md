@@ -61,25 +61,39 @@ git pull
 
 1. Get created route:
 
-    ```
-    oc get route -n openshift-image-registry image-registry -o jsonpath='{.spec.host}' && echo
-    ```
+    a. Run the following command to get the route:
 
-    Example Output: 
-    ```
-    image-registry-openshift-image-registry.apps.awesome.dmz
-    ```
+      ```
+      oc get route -n openshift-image-registry default-route -o jsonpath='{.spec.host}' && echo
+      ```
 
-2. Set internal registry variable to use service
+      Example Output: 
+      ```
+      default-route-openshift-image-registry.apps.awesome.dmz
+      ```
+
+    b. If successful, move on to step 2 (setting the internal registry to use service)
+    
+    c. **If "default-route" not found**, patch the image registry config and then run the above `get route` command again*
+
+      ```
+      oc patch configs.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
+      ```
+
+      ```
+      oc get route -n openshift-image-registry default-route -o jsonpath='{.spec.host}' && echo
+      ```
+
+      Example Output: 
+      ```
+      default-route-openshift-image-registry.apps.awesome.dmz
+      ```
+
+
+2. Set internal registry variable to use service (remember to use your output instead of the example output for this)
 
     ```
     export internal_registry=${internal_registry:-"image-registry-openshift-image-registry.apps.awesome.dmz"}
-    ```
-
-    *NOTE: If route not exposed:*
-
-    ```
-    oc patch configs.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
     ```
 
 3. Set OpenShift username variable for login
@@ -161,7 +175,7 @@ a. Variables Pre-set in configuration files:
 b. Set Variables as part of run:
 
 ```
-nfs_server=192.2.2.2 nfs_path=/srv/nfs internal_registry=image-registry-openshift-image-registry.apps.awesome.dmz ./NFS_Client_Setup.sh
+nfs_server=192.2.2.2 nfs_path=/srv/nfs ./NFS_Client_Setup.sh
 ```
 
 ## Cleanup
