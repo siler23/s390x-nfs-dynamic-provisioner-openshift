@@ -27,18 +27,12 @@
 		sudo mkdir -p /srv/nfs/
 		```
 
-	2. Give ownership of dir to nobody
 
-		```
-		sudo chown -R nobody:nobody /srv/nfs
-		```
-
-
-	3. Export the directory
+	2. Export the directory
 
 
 		```
-		echo "<export_directory> <client_node_hostname_or_ip>(rw,fsid=0,insecure,no_subtree_check,async)" | sudo tee -a /etc/exports
+		echo "<export_directory> <client_node_hostname_or_ip>(rw,insecure,no_subtree_check,sync,no_root_squash)" | sudo tee -a /etc/exports
 		```
 
 		*Add the client hostname or IP for each of the worker nodes. You can use a wildcard with hostnames such as kubernetes-worker* (if that was the hostname of each of your workers within your network) or an IP subnet mask (for example, 192.168.10/24).*
@@ -46,13 +40,13 @@
 		Example Output For Hostname:
 
 		```
-		/srv/nfs worker-*.atsocpd3.dmz(rw,fsid=0,insecure,no_subtree_check,async)
+		/srv/nfs worker-*.atsocpd3.dmz(rw,insecure,no_subtree_check,sync,no_root_squash)
 		```
 
 		Example Output For IP:
 
 		```
-		/srv/nfs 192.1.1.1(rw,fsid=0,insecure,no_subtree_check,async) 192.1.1.2(rw,fsid=0,insecure,no_subtree_check,async) 192.1.1.3(rw,fsid=0,insecure,no_subtree_check,async) 192.1.1.4(rw,fsid=0,insecure,no_subtree_check,async) 192.1.1.5(rw,fsid=0,insecure,no_subtree_check,async) 192.1.1.6(rw,fsid=0,insecure,no_subtree_check,async)
+		/srv/nfs 192.1.1.1(rw,insecure,no_subtree_check,sync,no_root_squash) 192.1.1.2(rw,insecure,no_subtree_check,sync,no_root_squash) 192.1.1.3(rw,insecure,no_subtree_check,sync,no_root_squash) 192.1.1.4(rw,insecure,no_subtree_check,sync,no_root_squash) 192.1.1.5(rw,insecure,no_subtree_check,sync,no_root_squash) 192.1.1.6(rw,insecure,no_subtree_check,sync,no_root_squash)
 		```
 
 3. Start the NFS server:
