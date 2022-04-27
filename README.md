@@ -51,14 +51,143 @@ git pull
 
 2. Have nfs server setup and add OpenShift nodes to exports list (`/etc/exports/`).
 
+## Setting up your NFS Server
+
+You need to set up an nfs mount point and export it to all OpenShift nodes you want to be able to access the storage. For more information on setting up nfs (if you don't have experience with this), see [Simplified NFS Server Setup Steps](NFS_server_setup.md)
+
 ## Running the Automation
 
 ### Configuration
 
-#### Using Internal Image Registry if you don't have internet access
+#### Using Internal Image Registry (required if you don't have internet access)
 
-**Outside cluster w/ routes**
+##### Setup Image Registry and backing Storage using NFS (if not already setup)
 
+If you want to use NFS for your internal image registry you can set it up with the following instructions (if you haven't already). *Note: If not NFS, you will at least want some kind of shareable backing storage if you are using the internal image registry at all for your cluster.*
+
+1. Set hostname/IP Address for NFS Server
+
+    ```
+    export nfs_server="192.2.2.2"
+    ```
+
+2. Set path to exported directory for image-registry on NFS Server (from server's point of view) (directory should have 777 permissions)
+
+    ```
+    export nfs_registry_path="/srv/nfs/image-registry"
+    ```
+
+
+3. Create PV (Persistent Volume using your NFS server) for your OpenShift Image Registry
+
+	```
+    oc create -f - <<EOF
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+        name: image-registry
+    spec:
+        storageClassName: ""
+        accessModes:
+        - ReadWriteMany
+        capacity:
+            storage: 100Gi
+        claimRef:
+            namespace: openshift-image-registry
+            name: image-registry
+        nfs:
+            path: "${nfs_registry_path}"
+            server: "${nfs_server}"
+        persistentVolumeReclaimPolicy: Recycle
+    EOF
+    ```
+
+4. Create PVC (Persistent Volume Claim) for your OpenShift Image Registry
+
+    ```
+    oc create -f - <<EOF
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+        name: image-registry
+        namespace: openshift-image-registry
+    spec:
+        storageClassName: ""
+        accessModes:
+        - ReadWriteMany
+        resources:
+            requests:
+                storage: 100Gi
+        volumeName: "image-registry"
+    EOF
+    ```
+
+5. Make sure the pvc has bound properly
+
+	```
+    oc get pvc image-registry -n openshift-image-registry
+    ```
+
+    Example Output:
+
+    ```
+    NAME             STATUS   VOLUME           CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+    image-registry   Bound    image-registry   100Gi      RWX                           42s
+    ```
+
+6. Edit Image Registry config to use the newly created persistent volume claim
+
+	```
+	oc patch configs.imageregistry.operator.openshift.io cluster --type='json' -p='[{"op": "remove", "path": "/spec/storage" },{"op": "add", "path": "/spec/storage", "value": {"pvc":{"claim": "image-registry"}}}]'
+	```
+
+    Example Output:
+
+    ```
+    config.imageregistry.operator.openshift.io/cluster patched
+    ```
+
+7. Check Management State and Set Image Registry to Managed (if it's currently removed)
+
+    1. Check management state (to see if removed)
+
+        ```
+        oc get configs.imageregistry.operator.openshift.io cluster -o jsonpath='{.spec.managementState}' && echo
+        ```
+
+        Example Output:
+
+        ```
+        Removed
+        ```
+
+    2. If removed change to Managed
+
+        ```
+        oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"managementState":"Managed"}}'
+        ```
+
+        Example Output:
+
+        ```
+        config.imageregistry.operator.openshift.io/cluster patched
+        ```
+
+8. Image Registry should become available
+
+    1. Check Image Registry is up
+
+        ```
+        oc get deploy image-registry -n openshift-image-registry
+        ```
+
+        Example Output (after waiting a minute or so for deployment to become available):
+        ```
+        NAME             READY   UP-TO-DATE   AVAILABLE   AGE
+        image-registry   1/1     1            1           44s
+        ```
+
+##### Access internal image registry and configuring script to use it
 1. Get created route:
 
     a. Run the following command to get the route:
@@ -93,7 +222,7 @@ git pull
 2. Set internal registry variable to use service (remember to use your output instead of the example output for this)
 
     ```
-    export internal_registry=${internal_registry:-"image-registry-openshift-image-registry.apps.awesome.dmz"}
+    export internal_registry="image-registry-openshift-image-registry.apps.awesome.dmz"
     ```
 
 3. Set OpenShift username variable for login
@@ -122,7 +251,7 @@ git pull
 
     e. If you fail due to something else, have fun debugging that one my friend (Tip: First make sure all the relevant variables are set)  
 
-#### Adding Image Registry Certificate
+##### Adding Image Registry Certificate
 
 1. Run the following command to grab the certificate for your image registry route:
 
@@ -148,8 +277,7 @@ git pull
     echo "$(oc whoami --show-token)" | podman login --username ${openshift_username} --password-stdin "${internal_registry}"
     ```
 
-
-
+### Launching Script
 #### Set NFS Server and Path
     
 1. Set hostname/IP Address for NFS Server
@@ -161,10 +289,10 @@ git pull
 2. Set Path to exported directory on NFS Server (from server's point of view)
 
     ```
-    export nfs_path=${nfs_path:-"/srv/nfs"}
+    export nfs_path="/srv/nfs"
     ```
 
-### Launching Script
+#### Set Additional Variables (if desired) and Run Script
 
 a. Variables Pre-set in configuration files:
 
