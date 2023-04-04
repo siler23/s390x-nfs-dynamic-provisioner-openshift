@@ -23,6 +23,6 @@ docker tag gmoney23/nfs-client-provisioner:1.1 "${nfs_image_repository}:${nfs_im
 docker push "${nfs_image_repository}:${nfs_image_tag}"
 
 echo "Loading and pushing busybox test image"
-docker load -i "busybox-${arch}-1.31.tar.gz"
-docker tag busybox:1.31 "${busybox_image_repository}:${busybox_image_tag}"
+docker load -i "busybox-${arch}-1.36.0.tar.gz"
+docker tag quay.io/gmoney23/busybox-${arch}:1.36.0 "${busybox_image_repository}:${busybox_image_tag}"
 docker push "${busybox_image_repository}:${busybox_image_tag}"

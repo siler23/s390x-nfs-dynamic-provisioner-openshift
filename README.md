@@ -253,6 +253,13 @@ If you want to use NFS for your internal image registry you can set it up with t
 
 ##### Adding Image Registry Certificate
 
+Note (ONLY if you are using podman machine such as on Mac or Windows instead of Podman on Linux) you can ssh into your Podman machine first and then use the following instructions (you can omit machine name for the default podman machine) with:
+
+```
+podman machine ssh machine_name
+```
+
+
 1. Run the following command to grab the certificate for your image registry route:
 
     ```

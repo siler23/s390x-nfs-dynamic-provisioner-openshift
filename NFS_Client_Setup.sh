@@ -134,8 +134,8 @@ if [ -n "${internal_registry}" ]; then
     export nfs_image_repository="image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/nfs-client-provisioner"
     export busybox_image_repository="image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/busybox"
 else
-    export busybox_image_repository=${busybox_image_repository:-"docker.io/busybox"}
-    export nfs_image_repository=${nfs_image_repository:-"docker.io/gmoney23/nfs-client-provisioner"}
+    export busybox_image_repository=${busybox_image_repository:-"quay.io/gmoney23/busybox"}
+    export nfs_image_repository=${nfs_image_repository:-"quay.io/gmoney23/nfs-client-provisioner"}
 fi
 
 trap RBACCreationFail ERR
